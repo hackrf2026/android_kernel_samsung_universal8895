@@ -15,20 +15,20 @@ jobs:
           sudo apt-get install -y build-essential bc bison flex \
           libssl-dev python3 device-tree-compiler
 
-      - name: Download Clang toolchain
+      - name: Download GCC toolchain
         run: |
           mkdir -p toolchain
-          git clone https://github.com/LineageOS/android_prebuilts_clang_kernel_linux-x86_clang-r416183b \
-          toolchain/clang -b lineage-20.0 --depth=1
+          git clone https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9 \
+          toolchain/gcc -b lineage-19.1 --depth=1
 
       - name: Build kernel
         run: |
           export ARCH=arm64
-          export CROSS_COMPILE=aarch64-linux-gnu-
-          export PATH=$GITHUB_WORKSPACE/toolchain/clang/bin:$PATH
-          export CC=clang
+          export SUBARCH=arm64
+          export CROSS_COMPILE=$GITHUB_WORKSPACE/toolchain/gcc/bin/aarch64-linux-android-
+          export HOSTCFLAGS="-fcommon"
           make O=out exynos8895-greatlte_defconfig
-          make O=out -j$(nproc)
+          make O=out -j$(nproc) HOSTCFLAGS="-fcommon"
 
       - name: Upload result
         uses: actions/upload-artifact@v4
