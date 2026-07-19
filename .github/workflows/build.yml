@@ -1,0 +1,37 @@
+name: Build Kernel
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential bc bison flex \
+          libssl-dev python3 device-tree-compiler
+
+      - name: Download Clang toolchain
+        run: |
+          mkdir -p toolchain
+          git clone https://github.com/LineageOS/android_prebuilts_clang_kernel_linux-x86_clang-r416183b \
+          toolchain/clang -b lineage-20.0 --depth=1
+
+      - name: Build kernel
+        run: |
+          export ARCH=arm64
+          export CROSS_COMPILE=aarch64-linux-gnu-
+          export PATH=$GITHUB_WORKSPACE/toolchain/clang/bin:$PATH
+          export CC=clang
+          make O=out exynos8895-greatlte_defconfig
+          make O=out -j$(nproc)
+
+      - name: Upload result
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernel-output
+          path: out/arch/arm64/boot/Image
